@@ -1,51 +1,53 @@
-# ---------------------------------------------------------------------------------------------------------------------
-# name:        -.py
-#
-# description: A template for Python scripts using arcpy, with logging and error handling
-#              -
-#              -
-#
-# author       Mic Zatorsky
-# date:        03/12/2025
-#
-# param:       input parameter
-#
-# pre:         pre-condition
-#
-# return:      returned value
-#
-# post:        post-conditions
-# 
-#
-#
-# Issues and known limitations:
-#     see all preconditions
-#     Writen for Python 3.9.18 as shipped with ArcGIS Pro 3.2.2
-#
-# Dev Notes:
-#     Remote origin: https://github.com/miczat/python-script-template
-#
-#     Terminology:
-#        image_filepath   =  C:\TEMP\A.JPG
-#        image_folderpath =  C:\TEMP
-#        image_foldername =  TEMP
-#        image_filename   =  A.JPG
-#        image_name       =  A 
-#        image_extension  =  JPG 
-##      
-# ---------------------------------------------------------------------------------------------------------------------
-__version__ = '1.7'
+"""
+A template for Python scripts using arcpy, with logging and error handling
 
-# remove where not used
-import arcpy
-from arcpy import env
-from arcpy.sa import *
+
+Args:
+    parameter: description
+    parameter: description
+
+Preconditions:
+    Statements that must be true before running the program.
+
+
+Postconditions
+    Statements that will be true after running the program.
+
+
+Returned values
+    What is returned by the program, if anything.
+
+Issues and known limitations:
+    Writen for Python 3.11.11 as shipped with ArcGIS Pro 3.5.3
+
+Dev Notes:
+    Remote origin: https://github.com/miczat/python-script-template
+
+    Terminology, with pathlib name:
+       image_path   =  C:\TEMP\A.JPG     # full path 'p'
+       image_folderpath =  C:\TEMP       # p.parent
+       image_foldername =  TEMP          # p.parent.name
+       image_filename   =  A.JPG         # p.name
+       image_name       =  A             # p.stem
+       image_extension  =  JPG           # p.suffix   
+     
+"""
+__author__ = "Mic Zatorsky"
+__version__ = '2.0'
+LAST_UPDATED = "2025-12-03"
+
+
+import arcpy  # pyright: ignore[reportMissingImports]
+from arcpy import env # pyright: ignore[reportMissingImports]
+from arcpy.sa import * # pyright: ignore[reportMissingImports]
 import logging
 import os
 import datetime
 import sys
 import traceback
 import csv
+from pathlib import Path    
+
 
 start_time = datetime.datetime.now()
 log = logging.getLogger()
@@ -68,10 +70,9 @@ arcpy.env.workspace = r'c:\Temp'   # fGDB or folder
 arcpy.env.overwriteOutput = True   # avoids having to test for existence and delete
 arcpy.env.addOutputsToMap = False
 
-# remove the one you don't want
-arcpy.env.outputCoordinateSystem = arcpy.SpatialReference('GDA 1994 MGA Zone 55')
-arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(28356)  # MGA Zone 56 by ESPG code
-arcpy.env.outputCoordinateSystem = arcpy.SpatialReference('Geocentric Datum of Australia 1994')
+# Update with the default CRS you want to use
+sr_GDA2020_MGA_Zone_56 = arcpy.SpatialReference(28356) 
+arcpy.env.outputCoordinateSystem = sr_GDA2020_MGA_Zone_56
 
 # for raster analysis 
 arcpy.env.extent = None
@@ -151,6 +152,7 @@ def get_row_count(tbl_or_lyr) -> int:
 def main():
     """main"""
     log.info('Start')
+    log.info(f"Script version {__version__}, by {__author__} last updated {LAST_UPDATED}")
     log.info(f'Using Python version {sys.version}')
 
     # Productive code goes here

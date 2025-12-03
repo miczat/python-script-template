@@ -1,4 +1,4 @@
-"""
+""" 
 A template for single-file Python scripts using arcpy, with logging and error handling
 
 
@@ -49,8 +49,8 @@ import csv
 from pathlib import Path    
 
 
-start_time = datetime.datetime.now()
-log = logging.getLogger()
+
+log = logging.getLogger(__name__)
 
 # -----------------------------------------
 # run config
@@ -82,30 +82,53 @@ arcpy.env.snapRaster = None
 # -----------------------------------------
 # create and configure the logger
 # -----------------------------------------
-def setup_logger(log_folder):
-    logfile_ext = '.log.csv'
+
+def flatten_for_csv(text: str) -> str:
+    """Make a message safe for one-line CSV logging."""
+    return (
+        text.replace('"', "''")    # avoid breaking our quoted "message" column
+            .replace('\r', '\\r')  # show newlines explicitly
+            .replace('\n', '\\n')
+    )
+
+
+
+def setup_logger(log_folder: str) -> None:
+    """Configure logging to a CSV file and the console.
+
+    Args:
+        log_folder: Folder where the log file will be written.
+
+    Raises:
+        PermissionError: If the log file is open in another app.
+        OSError: For other I/O-related errors.
+    """
+    if log.handlers:
+        # Logger already configured
+        return
+
+    logfile_ext = ".log.csv"
     logfile = os.path.join(log_folder, log_name + logfile_ext)
 
-    """Configures a logger
-    
-    :param logfile: the name of a logfile that will be written
-    :returns None
-    :raises PermissionError: if the logfile is open in another app
-    :raises IOError: if the logfile can't be written for another reason
-    """
+    # Decide if we need to write a header row
+    new_file = not os.path.exists(logfile) or os.path.getsize(logfile) == 0
 
-    # A formatter for use by all handlers
-    d = ","   # log column delimiter
-    log_msg_format_str = f'%(asctime)s{d}%(levelname)s{d}%(filename)s{d}%(funcName)s{d}"%(message)s"'
-    datetime_fmt_str = '%Y-%m-%d %H:%M:%S'
+    # Common formatter for both file and console
+    d = ","
+    log_msg_format_str = (
+        f"%(asctime)s{d}%(levelname)s{d}%(filename)s{d}%(funcName)s{d}\"%(message)s\""
+    )
+    datetime_fmt_str = "%Y-%m-%d %H:%M:%S"
     formatter = logging.Formatter(log_msg_format_str, datetime_fmt_str)
 
-    # Create a file handler which logs debug messages
+    # File handler
     try:
-        fh = logging.FileHandler(filename=logfile, mode='a')
+        fh = logging.FileHandler(filename=logfile, mode="a", encoding="utf-8")
     except PermissionError as pe:
-        print("The log file could not be written due to permissions. "
-              "Check if it is open in Excel or another app. Program stopping.")
+        print(
+            "The log file could not be written due to permissions. "
+            "Check if it is open in Excel or another app. Program stopping."
+        )
         print(repr(pe))
         raise
     except OSError as oe:
@@ -113,21 +136,25 @@ def setup_logger(log_folder):
         print(repr(oe))
         raise
     except Exception as e:
-        print('An error occurred. Program stopping')
+        print("An unexpected error occurred while configuring logging. Program stopping.")
         print(repr(e))
         raise
+
+    if new_file:
+        fh.stream.write("timestamp,level,filename,funcName,message\n")
+        fh.flush()
 
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(formatter)
     log.addHandler(fh)
 
-    # Create console handler
+    # Console handler (same verbose format for copy-paste to Excel)
     ch = logging.StreamHandler()
     ch.setLevel(logging.DEBUG)
     ch.setFormatter(formatter)
     log.addHandler(ch)
 
-    log.setLevel(logging.DEBUG)    # or INFO to be less verbose
+    log.setLevel(logging.DEBUG)
 
 
 # -----------------------------------------
@@ -160,43 +187,33 @@ def get_row_count(table_or_layer) -> int:
 
 def main():
     """main"""
+    start_time = datetime.datetime.now()
     log.info('Start')
     log.info(f"Script version {__version__}, by {__author__} last updated {LAST_UPDATED}")
-    log.info(f'Using Python version {sys.version}')
+    log.info(f"Using Python version {sys.version}")
 
-    # Productive code goes here
     try:
-        log.info('Trying...')
-        # do stuff
+        log.info("Trying...")
+        # do stuff here...
 
-    except arcpy.ExecuteError as ee:
-        log.error('The file may not exist. Program stopping')
-        error_value = sys.exc_info()[1]
-        log.error(error_value.args[0].replace(',', ' ').strip().replace('\r', '').replace('\n', ''))
-        sys.exit()
+    except arcpy.ExecuteError:
+        log.error("ArcPy ExecuteError: program stopping")
+        tb_text = traceback.format_exc()
+        log.error(flatten_for_csv(tb_text))
+        sys.exit(1)
 
-    except Exception as e:
-        error_value = sys.exc_info()[1]
-        error_traceback = sys.exc_info()[2]
-        tbinfo = traceback.format_tb(error_traceback)[0]
-        log.error("SOMETHING ELSE WENT WRONG")
-        log.error(error_value.args[0].replace(',', ' ').strip().replace('\r', '').replace('\n', ''))
-        log.error(tbinfo.replace(',', ' ').strip().replace('\r', '').replace('\n', ''))
-        raise
+    except Exception:
+        log.error("Unhandled exception: program stopping")
+        tb_text = traceback.format_exc()
+        log.error(flatten_for_csv(tb_text))
+        sys.exit(1)
 
-    # wrap up
-    log.info('Finished')
-    end_time = datetime.datetime.now()
-    duration = end_time - start_time
-    log.info(f'Duration          {duration}')
-
-    # close the log to release locks
-    log.debug('Closing log')
-    log_handlers_list = list(log.handlers)
-    for h in log_handlers_list:
-        log.removeHandler(h)
-        h.flush()
-        h.close()
+    finally:
+        end_time = datetime.datetime.now()
+        duration = end_time - start_time
+        log.info(f"Finished")
+        log.info(f"Duration          {duration}")
+        logging.shutdown()
 
 
 # program entry point when called from the command line

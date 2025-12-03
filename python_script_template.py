@@ -1,5 +1,5 @@
 """
-A template for Python scripts using arcpy, with logging and error handling
+A template for single-file Python scripts using arcpy, with logging and error handling
 
 
 Args:
@@ -133,17 +133,26 @@ def setup_logger(log_folder):
 # -----------------------------------------
 # get row count
 # -----------------------------------------
-def get_row_count(tbl_or_lyr) -> int:
-    """Count rows in a table or layer
-    
-    :param tbl_or_lyr: the name of the table
-    :returns: int: The count of rows
-    :raises None
+def get_row_count(table_or_layer) -> int:
+    """Return the number of rows in a table or feature layer.
+
+    Args:
+        table_or_layer: Table or feature layer path, name, or object accepted
+            by arcpy.GetCount_management. This can be, for example, a feature
+            class path, an in-memory layer name, or a layer object.
+
+    Returns:
+        int: Number of rows in the input dataset.
+
+    Raises:
+        arcpy.ExecuteError: If the underlying geoprocessing tool fails.
+        RuntimeError: If ArcPy is not initialized or the workspace is invalid.
     """
-    row_count = int(arcpy.GetCount_management(tbl_or_lyr)[0])
-    log.debug(f"{row_count} rows in {tbl_or_lyr}")
+    row_count = int(arcpy.GetCount_management(table_or_layer)[0])
+    log.debug(f"{row_count} rows in {table_or_layer}")
     return row_count
-   
+
+
 
 # -----------------------------------------
 # main

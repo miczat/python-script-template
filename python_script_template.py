@@ -26,13 +26,12 @@
 #     Remote origin: https://github.com/miczat/python-script-template
 #
 #     Terminology:
-#        Given "C:\TEMP\A.JPG":
-#            image_filepath   =  C:\TEMP\A.JPG
-#            image_folderpath =  C:\TEMP
-#            image_foldername =  TEMP
-#            image_filename   =  A.JPG
-#            image_name       =  A 
-#            image_extension  =  JPG 
+#        image_filepath   =  C:\TEMP\A.JPG
+#        image_folderpath =  C:\TEMP
+#        image_foldername =  TEMP
+#        image_filename   =  A.JPG
+#        image_name       =  A 
+#        image_extension  =  JPG 
 ##      
 # ---------------------------------------------------------------------------------------------------------------------
 __version__ = '1.7'

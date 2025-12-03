@@ -1,13 +1,12 @@
 # ---------------------------------------------------------------------------------------------------------------------
 # name:        -.py
 #
-# description: -
+# description: A template for Python scripts using arcpy, with logging and error handling
 #              -
 #              -
 #
-# version      1.5
 # author       Mic Zatorsky
-# date:        DD/MM/YY
+# date:        03/12/2025
 #
 # param:       input parameter
 #
@@ -24,25 +23,19 @@
 #     Writen for Python 3.9.18 as shipped with ArcGIS Pro 3.2.2
 #
 # Dev Notes:
-#
-#     For processes that require Esri extensions, see the list of extension names here:
-#     https://desktop.arcgis.com/en/arcmap/10.3/analyze/arcpy-functions/checkoutextension.htm
+#     Remote origin: https://github.com/miczat/python-script-template
 #
 #     Terminology:
 #        Given "C:\TEMP\A.JPG":
-#            filepath   =  C:\TEMP\A.JPG
-#            folderpath =  C:\TEMP
-#            foldername =  TEMP
-#            filename   =  A.JPG
-#            name       =  A 
-#            extension  =  JPG 
-#
-#
-# Ref:
-#     https://pro.arcgis.com/en/pro-app/latest/arcpy/functions/checkoutextension.htm
-#      
+#            image_filepath   =  C:\TEMP\A.JPG
+#            image_folderpath =  C:\TEMP
+#            image_foldername =  TEMP
+#            image_filename   =  A.JPG
+#            image_name       =  A 
+#            image_extension  =  JPG 
+##      
 # ---------------------------------------------------------------------------------------------------------------------
-
+__version__ = '1.7'
 
 # remove where not used
 import arcpy
@@ -84,9 +77,6 @@ arcpy.env.outputCoordinateSystem = arcpy.SpatialReference('Geocentric Datum of A
 # for raster analysis 
 arcpy.env.extent = None
 arcpy.env.snapRaster = None
-
-# List required extensions here (if any)
-required_extensions = ['3D', 'Spatial', 'DataInteroperability', 'Network']  # remove that which is not required
 
 
 # -----------------------------------------
@@ -162,11 +152,7 @@ def get_row_count(tbl_or_lyr) -> int:
 def main():
     """main"""
     log.info('Start')
-
     log.info(f'Using Python version {sys.version}')
-
-    log.info('Checking out Extensions')  # as defined in the run config
-    arcpy.CheckOutExtension(required_extensions)
 
     # Productive code goes here
     try:

@@ -96,7 +96,7 @@ def setup_logger(log_folder):
     logfile_ext = '.log.csv'
     logfile = os.path.join(log_folder, log_name + logfile_ext)
 
-   """Configures a logger
+    """Configures a logger
     
     :param logfile: the name of a logfile that will be written
     :returns None

@@ -9,50 +9,19 @@ If instructions in this file conflict with ad-hoc user prompts, **this file take
 
 ---
 
-## 1. Project Overview
+## Project Overview
 
-**Project name:** <PROJECT NAME>  
-**Primary language(s):** <e.g. Python 3.11>  
-**Primary domain:** <e.g. GIS / data engineering / backend services>
+**Project name:** Feature Class Profiler – test data generator (fc_profiler_create_testdata.py)
+**Primary domain:** GIS / data audit
+**Primary language:** Python
+**Target runtime:** Python 3.13.7 (ArcGIS Pro 3.6)
 
 **High-level goals:**
-- <Brief statement of what this project exists to do>
-- <Key constraints or non-goals, if any>
+- Script creation of geodatabase(s), feature class, fields, rows
+- The resulting data is used with unit and integration tests for "fc_profiler"
 
----
 
-## 2. Project Structure (Authoritative)
-
-> **NOTE:** This section is intentionally a placeholder.  
-> Maintain this section as the directory structure stabilizes.
-
-Codex should use this section to understand **where new code belongs** and **how components relate**.
-
-```text
-<repo-root>/
-├─ src/
-│  ├─ <module_a>/        # <purpose>
-│  ├─ <module_b>/        # <purpose>
-│  └─ __init__.py
-├─ tests/
-│  ├─ unit/
-│  └─ integration/
-├─ docs/
-├─ scripts/
-├─ .vscode/
-├─ AGENTS.md
-├─ README.md
-└─ pyproject.toml
-```
-
-**Architectural notes (if applicable):**
-- <e.g. functional-first, minimal OO>
-- <e.g. no business logic in scripts/>
-- <e.g. IO isolated from pure logic>
-
----
-
-## 3. Coding Conventions (Must Follow)
+## Coding Conventions (Must Follow)
 
 ### General
 - Write **clear, explicit, readable code**
@@ -60,11 +29,12 @@ Codex should use this section to understand **where new code belongs** and **how
 - Avoid unnecessary abstraction
 - Favor small, composable functions
 - Write for ease of reading and maintainability
+- Keep the solution to a single file
+- If requirements.md specifies hardcoded paths/env, implement exactly; do not generalize to CLI args.
 
 ### Python Standards (if applicable)
 - Follow **PEP 8**
 - Use **type hints** for public functions
-- Prefer `pathlib` over `os.path`
 - Prefer f-strings over `.format()`
 - No global state unless explicitly justified
 
@@ -74,48 +44,94 @@ Codex should use this section to understand **where new code belongs** and **how
 - Constants in `UPPER_SNAKE_CASE`
 - Avoid ambiguous abbreviations unless domain-standard
 
+### File and folder naming conventions
+
+This project uses **explicit, `pathlib`-aligned variable naming** for files and directories.
+The goal is clarity, consistency, and one-to-one mapping between variable names and
+`pathlib.Path` attributes.
+
+#### General rules
+
+- Use `path` for full paths (`pathlib.Path` objects)
+- Use `folderpath` for directory paths
+- Use `foldername` for directory names only (no path)
+- Use `filename` for file name including extension
+- Use `name` for file name without extension
+- Use `extension` for file extension (including the leading dot, unless explicitly stated)
+
+Avoid ambiguous terms such as `dir`, `file`, `fname`, `pathstr`, or overloaded names like `fp`.
+
+#### Standard `pathlib` mappings
+
+| Variable name        | Meaning                              | `pathlib` equivalent |
+|----------------------|--------------------------------------|----------------------|
+| `file_path`          | Full path to a file                  | `p`                  |
+| `folder_path`        | Full path to parent directory        | `p.parent`           |
+| `folder_name`        | Directory name only                  | `p.parent.name`      |
+| `file_name`          | File name with extension             | `p.name`             |
+| `file_stem`          | File name without extension          | `p.stem`             |
+| `file_extension`     | File extension (with leading dot)    | `p.suffix`           |
+
+#### Example
+
+```python
+from pathlib import Path
+
+file_path = Path(r"C:\TEMP\A.JPG")
+
+folder_path   = file_path.parent  # C:\TEMP
+folder_name   = folder_path.name  # TEMP
+file_name     = file_path.name    # A.JPG
+file_stem     = file_path.stem    # A
+file_extension = file_path.suffix # .JPG
+```
+
+
 ### Imports
 - Standard library first
 - Third-party libraries second
 - If importing arcpy, use a library in arcpy where a suitable library exists
 - Local imports last
-- Avoid wildcard imports
+- Avoid wildcard imports except when importing ArcPy extension toolboxes where that is established project practice (e.g., arcpy.sa). Otherwise prefer explicit imports
+- Remove unused imports; keep only what is required
+
+
+### ArcGIS Pro / ArcPy constraints
+ - Codex cannot execute ArcPy here; still write ArcPy code as required; include local run instructions and validations
+ - Assume ArcGIS Pro is installed; script runs inside the ArcGIS Pro conda env; no third-party deps.
+ - Target: Python environment is 3.13.7
+ - Use arcpy.management.* tools and arcpy.da.InsertCursor 
+ - Use SHAPE@ for geometry and wrap cursors in with blocks
+ - Prefer arcpy.SpatialReference(<epsg>) over WKT strings
+ - use arcpy.Describe(fc).spatialReference.factoryCode == <epsg> when comparing coordinate systems
+ - Prefer arcpy.PointGeometry, arcpy.Array, arcpy.Polyline, arcpy.Polygon patterns for geometry creation
+ - Prefer arcpy.ClearWorkspaceCache_management() before delete attempts (when applicable), and log potential lock sources.
+
 
 ---
 
-## 4. Testing Protocols
+## Logging & Error Handling
 
-### Framework
-- No rules
-
-### Expectations
-- No rules
-
-### Running Tests
-- No rules
-
----
-
-## 5. Logging & Error Handling
-
-- Use the project’s standard logging configuration
-- Do not use `print()` for operational logging
+- Use the project’s standard logging configuration. Do not modify setup_logger() / CSV format unless explicitly requested.
+- Do not use `print()` for operational logging.  print() is acceptable only as a fallback inside logger setup failure paths (when logging is not yet available).
 - Raise meaningful exceptions
 - Fail fast on invalid inputs
 
 ---
+## Validation
 
-## 6. Dependency Management
+Every validation failure must (1) log error with expected vs actual, then (2) raise.
+
+---
+## Dependency Management
 
 - Do not introduce new dependencies without justification
 - Prefer existing libraries already in use
 - Document any new dependency in:
-  - `pyproject.toml`
   - `README.md` (if user-facing)
-
 ---
 
-## 7. Git & Pull Request (PR) Guidelines
+## Git & Pull Request (PR) Guidelines
 
 ### Commit Messages
 - **Use the commit message template defined in `.gitmessages`**
@@ -139,7 +155,7 @@ Codex should **follow these conventions when generating PR descriptions or commi
 
 ---
 
-## 8. What Codex Should NOT Do
+## What Codex Should NOT Do
 
 - Do not reformat unrelated files
 - Do not introduce new architectural patterns unprompted
@@ -148,7 +164,7 @@ Codex should **follow these conventions when generating PR descriptions or commi
 
 ---
 
-## 9. When in Doubt
+## When in Doubt
 
 If requirements are unclear:
 1. Ask a clarifying question **before** generating code
